@@ -6,7 +6,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Create canvas for procedural continent texture
+// Create canvas for procedural Mars-like texture
 function createContinentTexture() {
     const size = 1024;
     const canvas = document.createElement('canvas');
@@ -14,33 +14,32 @@ function createContinentTexture() {
     canvas.height = size;
     const ctx = canvas.getContext('2d');
 
-    // Ocean color
-    ctx.fillStyle = '#1a4d7a';
+    // Base Mars surface color (rusty red-orange)
+    ctx.fillStyle = '#c1440e';
     ctx.fillRect(0, 0, size, size);
 
-    // Generate continents using random blobs
-    const continentCount = 5;
-    const landColor = '#2d5a3d';
-    const beachColor = '#c2b280';
+    // Generate darker basaltic plains (like Syrtis Major)
+    const darkRegionCount = 7;
+    const darkColor = '#8b4513';
 
-    for (let i = 0; i < continentCount; i++) {
+    for (let i = 0; i < darkRegionCount; i++) {
         const centerX = Math.random() * size;
         const centerY = Math.random() * size;
-        const blobCount = 15 + Math.floor(Math.random() * 20);
+        const blobCount = 12 + Math.floor(Math.random() * 15);
 
-        // Draw continent as collection of overlapping circles
+        // Draw dark regions as collection of overlapping circles
         for (let j = 0; j < blobCount; j++) {
             const angle = Math.random() * Math.PI * 2;
-            const distance = Math.random() * 150;
+            const distance = Math.random() * 120;
             const x = centerX + Math.cos(angle) * distance;
             const y = centerY + Math.sin(angle) * distance;
-            const radius = 30 + Math.random() * 80;
+            const radius = 25 + Math.random() * 60;
 
             // Create gradient for more natural look
             const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-            gradient.addColorStop(0, landColor);
-            gradient.addColorStop(0.7, landColor);
-            gradient.addColorStop(1, '#1a4d7a');
+            gradient.addColorStop(0, darkColor);
+            gradient.addColorStop(0.7, darkColor);
+            gradient.addColorStop(1, '#c1440e');
 
             ctx.fillStyle = gradient;
             ctx.beginPath();
@@ -49,21 +48,51 @@ function createContinentTexture() {
         }
     }
 
-    // Add some smaller islands
-    for (let i = 0; i < 20; i++) {
+    // Add lighter highland areas
+    const lightRegionCount = 6;
+    const lightColor = '#e8a87c';
+
+    for (let i = 0; i < lightRegionCount; i++) {
+        const centerX = Math.random() * size;
+        const centerY = Math.random() * size;
+        const blobCount = 10 + Math.floor(Math.random() * 12);
+
+        for (let j = 0; j < blobCount; j++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 100;
+            const x = centerX + Math.cos(angle) * distance;
+            const y = centerY + Math.sin(angle) * distance;
+            const radius = 20 + Math.random() * 50;
+
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            gradient.addColorStop(0, lightColor);
+            gradient.addColorStop(0.7, lightColor);
+            gradient.addColorStop(1, '#c1440e');
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Add some dust storm variations
+    for (let i = 0; i < 30; i++) {
         const x = Math.random() * size;
         const y = Math.random() * size;
-        const radius = 10 + Math.random() * 30;
+        const radius = 5 + Math.random() * 20;
 
-        ctx.fillStyle = landColor;
+        ctx.fillStyle = '#d2691e';
+        ctx.globalAlpha = 0.3;
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.globalAlpha = 1.0;
     }
 
-    // Add polar ice caps
-    const iceColor = '#e8f4f8';
-    const polarHeight = size * 0.15;
+    // Add polar ice caps (smaller than Earth's)
+    const iceColor = '#f5f5f5';
+    const polarHeight = size * 0.08;
 
     // North pole
     const northGradient = ctx.createLinearGradient(0, 0, 0, polarHeight);
@@ -92,18 +121,19 @@ const texture = createContinentTexture();
 
 const material = new THREE.MeshPhongMaterial({
     map: texture,
-    shininess: 5
+    shininess: 2,
+    specular: 0x111111
 });
 
 const planet = new THREE.Mesh(geometry, material);
 scene.add(planet);
 
-// Add atmosphere glow
-const atmosphereGeometry = new THREE.SphereGeometry(2.1, 64, 64);
+// Add atmosphere glow (thin reddish atmosphere for Mars)
+const atmosphereGeometry = new THREE.SphereGeometry(2.08, 64, 64);
 const atmosphereMaterial = new THREE.MeshBasicMaterial({
-    color: 0x4488ff,
+    color: 0xff8844,
     transparent: true,
-    opacity: 0.15,
+    opacity: 0.08,
     side: THREE.BackSide
 });
 const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
@@ -118,7 +148,7 @@ directionalLight.position.set(5, 3, 5);
 scene.add(directionalLight);
 
 // Add subtle rim light from opposite side
-const rimLight = new THREE.DirectionalLight(0x6688ff, 0.3);
+const rimLight = new THREE.DirectionalLight(0xffaa88, 0.2);
 rimLight.position.set(-5, -2, -5);
 scene.add(rimLight);
 
