@@ -1,0 +1,15 @@
+repos:
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.11 # Latest as of Aug 28, 2025
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0  # Latest as of August 9, 2025
+    hooks:
+    - id: check-merge-conflict
+    - id: check-json
+      exclude: \.vscode/launch\.json$
+    - id: check-yaml
+    - id: trailing-whitespace

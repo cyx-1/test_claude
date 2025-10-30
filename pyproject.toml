@@ -1,0 +1,24 @@
+[project]
+name = "test_claude"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+# [dependency-groups] is the uv way of specifying dev dependencies, which gets picked up by uv sync
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-xdist"
+]
+
+
+
+[tool.ruff]
+line-length = 130
+lint.ignore = ["E203", "E266"]
+lint.select = [
+    "I",  # Enable import sorting
+]
+lint.mccabe.max-complexity = 18
