@@ -141,6 +141,91 @@ starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVer
 const stars = new THREE.Points(starsGeometry, starsMaterial);
 scene.add(stars);
 
+// Create spaceship
+const spaceship = new THREE.Group();
+
+// Main body (fuselage)
+const bodyGeometry = new THREE.ConeGeometry(0.08, 0.4, 8);
+const bodyMaterial = new THREE.MeshPhongMaterial({
+    color: 0xcccccc,
+    shininess: 100,
+    specular: 0x444444
+});
+const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+body.rotation.x = Math.PI / 2;
+spaceship.add(body);
+
+// Cockpit (glowing blue sphere)
+const cockpitGeometry = new THREE.SphereGeometry(0.06, 16, 16);
+const cockpitMaterial = new THREE.MeshPhongMaterial({
+    color: 0x00ccff,
+    emissive: 0x0088cc,
+    shininess: 100,
+    transparent: true,
+    opacity: 0.9
+});
+const cockpit = new THREE.Mesh(cockpitGeometry, cockpitMaterial);
+cockpit.position.z = 0.15;
+spaceship.add(cockpit);
+
+// Wings
+const wingGeometry = new THREE.BoxGeometry(0.4, 0.02, 0.15);
+const wingMaterial = new THREE.MeshPhongMaterial({
+    color: 0x888888,
+    shininess: 80
+});
+const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
+leftWing.position.set(-0.15, 0, -0.05);
+spaceship.add(leftWing);
+
+const rightWing = new THREE.Mesh(wingGeometry, wingMaterial);
+rightWing.position.set(0.15, 0, -0.05);
+spaceship.add(rightWing);
+
+// Engine glows (emissive spheres)
+const engineGeometry = new THREE.SphereGeometry(0.04, 16, 16);
+const engineMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff6600,
+    transparent: true,
+    opacity: 0.8
+});
+
+const leftEngine = new THREE.Mesh(engineGeometry, engineMaterial);
+leftEngine.position.set(-0.06, 0, -0.2);
+spaceship.add(leftEngine);
+
+const rightEngine = new THREE.Mesh(engineGeometry, engineMaterial);
+rightEngine.position.set(0.06, 0, -0.2);
+spaceship.add(rightEngine);
+
+// Add engine glow effect (point lights)
+const leftEngineLight = new THREE.PointLight(0xff6600, 0.5, 1);
+leftEngineLight.position.set(-0.06, 0, -0.2);
+spaceship.add(leftEngineLight);
+
+const rightEngineLight = new THREE.PointLight(0xff6600, 0.5, 1);
+rightEngineLight.position.set(0.06, 0, -0.2);
+spaceship.add(rightEngineLight);
+
+// Add spotlight from front of spaceship
+const spaceshipLight = new THREE.SpotLight(0x00ccff, 0.3);
+spaceshipLight.position.set(0, 0, 0.2);
+spaceshipLight.angle = Math.PI / 6;
+spaceshipLight.penumbra = 0.5;
+spaceship.add(spaceshipLight);
+
+// Position spaceship in orbit
+const orbitRadius = 3.5;
+spaceship.position.x = orbitRadius;
+spaceship.position.y = 0.5;
+
+scene.add(spaceship);
+
+// Orbit parameters
+let orbitAngle = 0;
+const orbitSpeed = 0.005;
+const orbitTilt = 0.3; // Tilt the orbit for more dynamic view
+
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
@@ -151,6 +236,29 @@ function animate() {
 
     // Slow rotation of stars for depth
     stars.rotation.y += 0.0001;
+
+    // Spaceship orbital motion
+    orbitAngle += orbitSpeed;
+
+    // Calculate orbital position with tilt
+    spaceship.position.x = Math.cos(orbitAngle) * orbitRadius;
+    spaceship.position.z = Math.sin(orbitAngle) * orbitRadius;
+    spaceship.position.y = Math.sin(orbitAngle) * orbitTilt;
+
+    // Make spaceship face direction of travel
+    spaceship.lookAt(
+        Math.cos(orbitAngle + 0.1) * orbitRadius,
+        Math.sin(orbitAngle + 0.1) * orbitTilt,
+        Math.sin(orbitAngle + 0.1) * orbitRadius
+    );
+
+    // Add slight roll to the spaceship
+    spaceship.rotation.z = Math.sin(orbitAngle * 2) * 0.1;
+
+    // Pulse the engine lights for effect
+    const enginePulse = 0.3 + Math.sin(orbitAngle * 10) * 0.2;
+    leftEngineLight.intensity = enginePulse;
+    rightEngineLight.intensity = enginePulse;
 
     renderer.render(scene, camera);
 }
