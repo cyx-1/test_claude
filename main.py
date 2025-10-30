@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
+    print("hello")
     configure_logging()
     logger.info(f"Starting program version: {__version__}")
     do_something(["test", "test2"])
