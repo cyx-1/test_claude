@@ -126,3 +126,12 @@ dmypy.json
 .pyre/
 
 .ruff_cache/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+build/
+target/
