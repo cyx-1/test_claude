@@ -88,7 +88,23 @@ A Python program to monitor and manage multiple git repositories defined in a co
   - Append to journal.md with timestamp
   - Format for easy reading and historical tracking
 
+## Development Approach
+
+This project follows **Test-Driven Development (TDD)** principles:
+- Write tests FIRST before implementing functionality
+- Tests define expected behavior and API contracts
+- Implementation follows to satisfy tests
+- Refactor with confidence knowing tests will catch regressions
+
 ## Technical Implementation Steps
+
+### Step 0: Test Infrastructure Setup
+- Set up pytest framework and testing dependencies
+- Configure pytest with async support (pytest-asyncio)
+- Set up test fixtures for mocking git operations
+- Create test directory structure mirroring source code
+- Configure coverage reporting (pytest-cov)
+- Dependencies: `uv add --dev pytest pytest-asyncio pytest-cov pytest-mock`
 
 ### Step 1: Environment Setup
 - Use `uv` for dependency management
@@ -98,52 +114,103 @@ A Python program to monitor and manage multiple git repositories defined in a co
   - **asyncio**: Built-in (Python 3.7+) for parallel operations
   - **openai**: OpenAI API client for AI-generated commit messages and summaries
 - Add dependencies: `uv add gitpython pyyaml openai`
+- Add dev dependencies: `uv add --dev pytest pytest-asyncio pytest-cov pytest-mock`
 
-### Step 2: Configuration Management
+### Step 2: Configuration Management (TDD)
+**Tests First (`tests/test_config_manager.py`):**
+- Test loading valid config.yaml
+- Test handling missing config file
+- Test validation of repository entries (missing fields, invalid paths)
+- Test environment variable substitution (${OPENAI_API_KEY})
+- Test default settings when not specified
+
+**Implementation (`config_manager.py`):**
 - Create `config.yaml` schema/structure
 - Implement config parser and validator
 - Validate repository entries (name, local_path, remote_url)
 - Handle malformed or missing configuration gracefully
 
-### Step 3: Repository Initialization
-- **Clone missing repositories**: Check if local_path exists
-  - If not, perform `git clone <remote_url> <local_path>`
-  - Handle clone failures (auth issues, network errors)
+### Step 3: Repository Initialization (TDD)
+**Tests First (`tests/test_repo_manager.py`):**
+- Test detection of existing repositories
+- Test cloning missing repositories (mock git clone)
+- Test handling clone failures (network, auth errors)
+- Test async parallel cloning of multiple repos
+- Test validation of .git directory
+
+**Implementation (`repo_manager.py`):**
+- Clone missing repositories: Check if local_path exists
+- Perform `git clone <remote_url> <local_path>`
+- Handle clone failures (auth issues, network errors)
 - Validate existing repositories (verify .git directory)
 - Use asyncio to clone multiple repositories in parallel
 
-### Step 4: Git Operations Module (Async)
+### Step 4: Git Operations Module (TDD)
+**Tests First (`tests/test_git_analyzer.py`):**
+- Test fetching remote information (mock git fetch)
+- Test parsing local and remote branch lists
+- Test identifying tracking relationships
+- Test handling repositories with no remotes
+- Test async execution of git operations
+
+**Implementation (`git_analyzer.py`):**
 - Implement async wrappers for git operations
-- Fetch latest remote information (without pulling) - use `git fetch --all`
+- Fetch latest remote information - use `git fetch --all`
 - Parse branch information (local and remote)
 - Compare commits between local and remote branches
 - All git operations should be async to enable parallelization
 
-### Step 5: Commit Comparison Logic
+### Step 5: Commit Comparison Logic (TDD)
+**Tests First (`tests/test_commit_analyzer.py`):**
+- Test identifying commits ahead/behind
+- Test extracting commit metadata (hash, author, date, message)
+- Test handling branches with no tracking remote
+- Test remote-only branches without local equivalents
+- Test edge cases (empty repos, initial commits)
+
+**Implementation (`commit_analyzer.py`):**
 - Use `git rev-list` or GitPython equivalents
 - Identify commit differences (ahead/behind)
 - Extract commit metadata (hash, author, date, message)
 - Handle all branches (including remote-only branches)
 
-### Step 6: Summary Generator
+### Step 6: Summary Generator (TDD)
+**Tests First (`tests/test_result_generator.py`):**
+- Test structuring repository data for YAML
+- Test grouping commits by branch
+- Test including metadata (timestamp, status)
+- Test handling error/warning cases
+- Test YAML output format validity
+
+**Implementation (`result_generator.py`):**
 - Parse commit messages
 - Structure data for YAML output
 - Group by repository and branch
 - Include metadata (analysis timestamp, repository status)
 
-### Step 7: YAML Result Generation
+### Step 7: YAML Result Generation (TDD)
+**Tests First (in `tests/test_result_generator.py`):**
+- Test complete result.yaml structure
+- Test YAML serialization and deserialization
+- Test handling special characters in commit messages
+- Test error sections for failed operations
+
+**Implementation (in `result_generator.py`):**
 - Design result.yaml structure
 - Convert analysis data to YAML format
 - Write to `result.yaml` file
 - Include error/warning sections for failed operations
 
-### Step 8: Main Controller (Async Orchestration)
-- Use `asyncio.gather()` to process multiple repositories in parallel
-- Orchestrate: config loading → clone/validate → fetch → analyze → generate output
-- Handle errors gracefully (don't let one repo failure stop entire process)
-- Implement logging for progress tracking
+### Step 8: AI Integration Module (TDD)
+**Tests First (`tests/test_ai_integration.py`):**
+- Test commit message generation (mock OpenAI API)
+- Test pull summary generation
+- Test conventional commit format
+- Test API error handling (fallback to simple messages)
+- Test different API types (OpenAI, Azure, custom)
+- Test rate limiting and retries
 
-### Step 9: AI Integration Module
+**Implementation (`ai_integration.py`):**
 - Implement OpenAI API client wrapper
 - **Commit message generation**:
   - Accept git diff and status as input
@@ -155,7 +222,17 @@ A Python program to monitor and manage multiple git repositories defined in a co
   - Group by functionality/theme if possible
 - Handle API errors gracefully (fallback to simple messages)
 
-### Step 10: Batch Action Operations (Async)
+### Step 9: Batch Action Operations (TDD)
+**Tests First (`tests/test_batch_operations.py`):**
+- Test commit-and-push workflow (mock git operations)
+- Test detecting uncommitted changes
+- Test handling repositories with no changes
+- Test pull operation and change tracking
+- Test handling merge conflicts
+- Test async parallel execution across repos
+- Test per-repository error handling
+
+**Implementation (`batch_operations.py`):**
 - **Commit and Push All**:
   - Check for uncommitted changes
   - Generate AI commit messages
@@ -166,13 +243,45 @@ A Python program to monitor and manage multiple git repositories defined in a co
   - Track changes (before/after commit SHAs)
   - Extract pulled commit information
   - Handle conflicts and errors
-- **Journal Generation**:
-  - Format pulled changes per repository/branch
-  - Generate AI summaries for each pull
-  - Append to journal.md with timestamps
-  - Use markdown formatting for readability
 
-### Step 11: CLI Interface
+### Step 10: Journal Generation (TDD)
+**Tests First (`tests/test_journal_generator.py`):**
+- Test journal.md format generation
+- Test appending new entries with timestamps
+- Test organizing by repository and branch
+- Test AI summary integration
+- Test handling repos with no changes
+- Test markdown formatting correctness
+
+**Implementation (`journal_generator.py`):**
+- Format pulled changes per repository/branch
+- Generate AI summaries for each pull
+- Append to journal.md with timestamps
+- Use markdown formatting for readability
+
+### Step 11: Main Controller (TDD)
+**Tests First (`tests/test_main_controller.py`):**
+- Test async orchestration workflow
+- Test error handling (one repo failure doesn't stop others)
+- Test config loading → clone → fetch → analyze → output
+- Test progress tracking and logging
+- Test integration of all modules
+
+**Implementation (in `main.py`):**
+- Use `asyncio.gather()` to process multiple repositories in parallel
+- Orchestrate: config loading → clone/validate → fetch → analyze → generate output
+- Handle errors gracefully (don't let one repo failure stop entire process)
+- Implement logging for progress tracking
+
+### Step 12: CLI Interface (TDD)
+**Tests First (`tests/test_cli.py`):**
+- Test command parsing (status, commit-push, pull, sync)
+- Test argument handling (--config, --no-ai)
+- Test exit codes for success/failure
+- Test console output formatting
+- Test command execution flow
+
+**Implementation (in `main.py`):**
 - Entry point: `uv run python main.py [command]`
 - Commands:
   - `status` (default): Generate result.yaml with current status
@@ -188,21 +297,89 @@ A Python program to monitor and manage multiple git repositories defined in a co
 ## Project Structure
 ```
 git_repo_control/
-├── main.py                 # Entry point (CLI commands and async orchestration)
-├── config.yaml             # Repository configuration (user-defined)
-├── result.yaml             # Generated output (analysis results)
-├── journal.md              # Generated pull history with AI summaries
-├── config_manager.py       # Config parsing and validation
-├── repo_manager.py         # Repository cloning and initialization (async)
-├── git_analyzer.py         # Git operations and status analysis (async)
-├── commit_analyzer.py      # Commit comparison logic
-├── result_generator.py     # YAML output generation
-├── ai_integration.py       # OpenAI API wrapper for commit messages and summaries
-├── batch_operations.py     # Commit/push/pull operations across all repos (async)
-├── journal_generator.py    # Journal.md generation with AI summaries
-├── README.md               # Documentation with source code and output examples
-└── pyproject.toml          # Dependencies (gitpython, pyyaml, openai)
+├── main.py                      # Entry point (CLI commands and async orchestration)
+├── config.yaml                  # Repository configuration (user-defined)
+├── result.yaml                  # Generated output (analysis results)
+├── journal.md                   # Generated pull history with AI summaries
+├── config_manager.py            # Config parsing and validation
+├── repo_manager.py              # Repository cloning and initialization (async)
+├── git_analyzer.py              # Git operations and status analysis (async)
+├── commit_analyzer.py           # Commit comparison logic
+├── result_generator.py          # YAML output generation
+├── ai_integration.py            # OpenAI API wrapper for commit messages and summaries
+├── batch_operations.py          # Commit/push/pull operations across all repos (async)
+├── journal_generator.py         # Journal.md generation with AI summaries
+├── tests/                       # Test suite (TDD approach)
+│   ├── __init__.py
+│   ├── conftest.py              # Pytest fixtures and configuration
+│   ├── test_config_manager.py   # Tests for config parsing
+│   ├── test_repo_manager.py     # Tests for repository initialization
+│   ├── test_git_analyzer.py     # Tests for git operations
+│   ├── test_commit_analyzer.py  # Tests for commit comparison
+│   ├── test_result_generator.py # Tests for YAML generation
+│   ├── test_ai_integration.py   # Tests for AI integration (mocked)
+│   ├── test_batch_operations.py # Tests for batch commit/push/pull
+│   ├── test_journal_generator.py# Tests for journal generation
+│   ├── test_main_controller.py  # Tests for main orchestration
+│   └── test_cli.py              # Tests for CLI interface
+├── pytest.ini                   # Pytest configuration
+├── .coveragerc                  # Coverage configuration
+├── README.md                    # Documentation with source code and output examples
+└── pyproject.toml               # Dependencies (gitpython, pyyaml, openai, pytest, etc.)
 ```
+
+## TDD Workflow
+
+For each module implementation, follow this cycle:
+
+1. **RED**: Write failing tests first
+   - Define the expected behavior
+   - Write test cases covering normal and edge cases
+   - Run tests - they should fail (no implementation yet)
+
+2. **GREEN**: Write minimal code to pass tests
+   - Implement just enough to make tests pass
+   - Focus on functionality, not optimization
+   - Run tests - they should pass
+
+3. **REFACTOR**: Improve code quality
+   - Clean up implementation
+   - Remove duplication
+   - Optimize performance
+   - Run tests - they should still pass
+
+4. **REPEAT**: Move to next feature
+
+### Testing Strategy
+
+**Unit Tests:**
+- Test individual functions and classes in isolation
+- Mock external dependencies (git operations, API calls, file I/O)
+- Fast execution (entire suite should run in seconds)
+- High coverage (aim for >90%)
+
+**Integration Tests:**
+- Test interactions between modules
+- Use test fixtures with temporary directories
+- Mock external services but test real file operations
+- Verify end-to-end workflows
+
+**Mocking Strategy:**
+- Mock all git operations (clone, fetch, push, pull)
+- Mock OpenAI API calls with predefined responses
+- Mock file system operations where appropriate
+- Use pytest-mock for easy mocking
+
+**Fixtures (conftest.py):**
+- Sample config.yaml structures
+- Mock git repository objects
+- Temporary directories for file operations
+- Mock API response objects
+
+**Coverage Goals:**
+- Minimum 90% code coverage
+- 100% coverage for critical paths (config parsing, git operations)
+- Run coverage reports with: `uv run pytest --cov=. --cov-report=html`
 
 ## Configuration File Structure (config.yaml)
 
