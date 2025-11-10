@@ -1,0 +1,56 @@
+[run]
+# Coverage configuration for git_repo_control project
+
+# Source directories to measure
+source = .
+
+# Omit certain files from coverage
+omit =
+    .venv/*
+    tests/*
+    setup.py
+    */site-packages/*
+    */__pycache__/*
+    */test_*.py
+
+# Enable branch coverage
+branch = True
+
+[report]
+# Reporting options
+precision = 2
+show_missing = True
+skip_covered = False
+
+# Fail if coverage is below threshold
+fail_under = 90
+
+# Exclude lines from coverage
+exclude_lines =
+    # Standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug code
+    def __repr__
+    def __str__
+
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+
+    # Don't complain if non-runnable code isn't run
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+    @abc.abstractmethod
+
+    # Don't complain about protocol definitions
+    \.\.\.
+
+[html]
+# HTML report directory
+directory = htmlcov
+
+[xml]
+# XML report output
+output = coverage.xml
