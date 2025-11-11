@@ -74,6 +74,7 @@ Features:
 - Detects uncommitted changes
 - Lists ahead/behind status for all branches
 - Identifies remote branches without local equivalents
+- **Filters out merged branches** - Only shows branches with diverged commits
 - Generates `result.yaml` with detailed analysis
 
 ### Commit and Push
