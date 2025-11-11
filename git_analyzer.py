@@ -99,14 +99,31 @@ class GitAnalyzer:
         """
         branch_results = []
 
+        # Get current branch for merged checks
+        try:
+            current_branch = self.repo.active_branch
+        except TypeError:
+            current_branch = None
+
         # Analyze local branches
         for branch in self.repo.heads:
             branch_info = self._analyze_local_branch(branch)
+
+            # Skip if branch is behind but has been merged into tracking branch
+            if branch_info.get("behind", 0) > 0 and branch_info.get("ahead", 0) == 0:
+                tracking = branch.tracking_branch()
+                if tracking and self._is_merged_into(branch, tracking):
+                    continue
+
             branch_results.append(branch_info)
 
         # Analyze remote-only branches
         remote_branches = self._get_remote_only_branches()
         for remote_ref in remote_branches:
+            # Skip if remote branch has been merged into current branch or main/master
+            if self._is_remote_branch_merged(remote_ref, current_branch):
+                continue
+
             branch_info = self._analyze_remote_branch(remote_ref)
             branch_results.append(branch_info)
 
@@ -227,6 +244,67 @@ class GitAnalyzer:
             return [self._format_commit(c) for c in commits]
         except GitCommandError:
             return []
+
+    def _is_merged_into(self, source_branch, target_branch) -> bool:
+        """
+        Check if source branch has been merged into target branch.
+
+        Args:
+            source_branch: Branch to check if merged
+            target_branch: Branch to check into
+
+        Returns:
+            True if source is merged into target, False otherwise
+        """
+        try:
+            # Check if there are any commits in source that are not in target
+            # If there are no such commits, the branch has been fully merged
+            unmerged_commits = list(
+                self.repo.iter_commits(f"{target_branch.name}..{source_branch.name}")
+            )
+            return len(unmerged_commits) == 0
+        except (GitCommandError, ValueError):
+            return False
+
+    def _is_remote_branch_merged(self, remote_ref, current_branch) -> bool:
+        """
+        Check if a remote branch has been merged into current or main branch.
+
+        Args:
+            remote_ref: Remote reference to check
+            current_branch: Current active branch (or None)
+
+        Returns:
+            True if remote branch is merged, False otherwise
+        """
+        try:
+            # Check against current branch first
+            if current_branch:
+                try:
+                    unmerged = list(
+                        self.repo.iter_commits(f"{current_branch.name}..{remote_ref.name}")
+                    )
+                    if len(unmerged) == 0:
+                        return True
+                except (GitCommandError, ValueError):
+                    pass
+
+            # Check against main/master branches
+            for main_branch_name in ["main", "master"]:
+                try:
+                    main_branch = self.repo.heads[main_branch_name]
+                    unmerged = list(
+                        self.repo.iter_commits(f"{main_branch.name}..{remote_ref.name}")
+                    )
+                    if len(unmerged) == 0:
+                        return True
+                except (IndexError, GitCommandError, ValueError):
+                    continue
+
+            return False
+
+        except Exception:
+            return False
 
     def _format_commit(self, commit) -> Dict[str, str]:
         """Format commit information."""
