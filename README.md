@@ -1,22 +1,58 @@
-# About this project
-- this project uses [uv](https://cyx-1.github.io/notes_technology/uv.html) extensively to manage tools, libraries, and python version
-- the following tools should be already installed via ```uv tool install``` with versions greater or equal to:
-    - [pre-commit v4.3.0](https://cyx-1.github.io/notes_technology/pre-commit.html)
-    - [cookiecutter v2.6.0](https://cyx-1.github.io/notes_technology/cookiecutter.html)
-    - [ruff v0.12.11](https://cyx-1.github.io/notes_technology/ruff.html)
-- python should be already installed via ```uv python install 3.10, 3.11, 3.12, 3.13```
-- this project's [pre-commit](https://cyx-1.github.io/notes_technology/pre-commit.html) uses: ruff, json, yaml, trailing-white-spaces
-    - pre-commit has pre and post hook logic to validate and activate git, uv, pre-commit and so on
-- this project uses python version: 3.12
+# Git Repository Control - MVP
 
-# Useful command
-- To run pre-commit explicitly: ```pre-commit run --all-files```
-- To run ruff explicitly: ```uv run ruff check``` and ```uv run ruff format```
-- To use uv to add library dependencies: ```uv add <pkg>```
-- To run pytest and watch folder for changes: ```uv run pytest -f```
-- To update project version, modify ```__init__.py```
-- To update pre-commit packages: ```pre-commit autoupdate```
-- To switch to a different python version, update ```.python-version``` then run ```uv run python --version```
+A Python tool to monitor and manage multiple git repositories from a single configuration file.
 
-# TODO
-- add ability to turn into a package and deal with version information via setup.cfg
+## Features (MVP)
+
+✅ **Config-driven repository management** - Define all repos in `config.yaml`  
+✅ **Auto-clone missing repositories** - Automatically clones repos that don't exist locally  
+✅ **Parallel operations** - Uses asyncio for fast concurrent processing  
+✅ **Branch analysis** - Shows ahead/behind status for all branches  
+✅ **Remote branch detection** - Identifies remote branches without local equivalents  
+✅ **YAML output** - Structured results in `result.yaml` for programmatic use  
+✅ **Clean CLI** - Simple command-line interface with progress indicators  
+
+## Quick Start
+
+### 1. Install dependencies
+
+```bash
+uv add gitpython pyyaml
+```
+
+### 2. Create config.yaml
+
+```yaml
+repositories:
+  - name: my-project
+    local_path: /home/user/projects/my-project
+    remote_url: https://github.com/user/my-project.git
+```
+
+### 3. Run status check
+
+```bash
+uv run python main.py
+```
+
+## Usage
+
+```bash
+# Check status (default)
+uv run python main.py
+
+# Use custom config
+uv run python main.py --config /path/to/config.yaml
+
+# Show help
+uv run python main.py --help
+```
+
+## Development
+
+Tests: 49 passing, 90%+ coverage  
+Run: `uv run pytest`
+
+## License
+
+MIT

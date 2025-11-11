@@ -1,0 +1,24 @@
+# Git Repository Control Configuration
+#
+# This file defines repositories to monitor and manage.
+
+repositories:
+  # Current test repository
+  - name: test_claude
+    local_path: /home/user/test_claude
+    remote_url: http://127.0.0.1:57623/git/cyx-1/test_claude
+
+# Optional settings
+settings:
+  auto_fetch: true           # Automatically fetch from remotes
+  parallel_limit: 10         # Max concurrent operations
+  clone_on_missing: true     # Auto-clone if local path doesn't exist
+
+# AI integration settings (not used in MVP)
+ai:
+  enabled: false             # Disable AI features for MVP
+  api_type: openai
+  api_key: ${OPENAI_API_KEY}
+  model: gpt-4o-mini
+  max_tokens: 500
+  temperature: 0.7
