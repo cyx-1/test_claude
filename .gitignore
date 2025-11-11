@@ -135,3 +135,5 @@ dmypy.json
 .gradle/
 build/
 target/
+# Generated output files
+result.yaml
